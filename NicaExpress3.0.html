@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Facturación - Nica Expres</title>
+  <style>
+    /* Estilos básicos */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2, h3 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    /* Contenedor del logo */
+    .logo-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+
+const logoSVG = `
+  <svg class="truck-logo" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg" width="200">
+    <!-- Fondo del logo -->
+    <rect x="10" y="30" width="280" height="50" rx="5" fill="#3498db"/>
+
+    <!-- Texto -->
+    <text x="150" y="55" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">Nica Expres</text>
+    <text x="150" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">moving and transportation</text>
+  </svg>
+`;
+
+    /* Formularios */
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .col {
+      flex: 1;
+    }
+
+    /* Botones */
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      display: block;
+      margin: 20px 0;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .print-btn {
+      background-color: #27ae60;
+      margin: 20px 0;
+    }
+
+    .print-btn:hover {
+      background-color: #219653;
+    }
+
+    /* Contenedores de servicios y trabajadores */
+    .services-container, .workers-container {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+    }
+
+    .service-item, .worker-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .service-item input[type="text"], .worker-item input[type="text"] {
+      flex: 2;
+    }
+
+    .service-item input[type="number"], .worker-item input[type="number"] {
+      flex: 1;
+    }
+
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background-color: #c0392b;
+    }
+
+    /* Estilos de la factura */
+    .factura {
+      border: 1px solid #ddd;
+      padding: 30px;
+      position: relative;
+      margin-top: 30px;
+      background-color: white;
+    }
+
+    .factura h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .factura-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .factura-logo {
+      width: 200px;
+      text-align: center;
+    }
+
+    .factura-info {
+      text-align: right;
+    }
+
+    .factura-details {
+      margin-bottom: 20px;
+    }
+
+    .factura-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .factura-table th, .factura-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .factura-table th {
+      background-color: #f9f9f9;
+    }
+
+    .factura-table tr.total td {
+      font-weight: bold;
+    }
+
+    .factura-footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* Configuración para impresión */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .factura, .factura * {
+        visibility: visible;
+      }
+      .factura {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 15px;
+        border: none;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+
+    /* Pestañas */
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background-color: #f1f1f1;
+      cursor: pointer;
+      border-radius: 5px 5px 0 0;
+      margin-right: 5px;
+    }
+
+    .tab.active {
+      background-color: #3498db;
+      color: white;
+    }
+
+    /* Secciones del formulario */
+    .form-section, .preview-section {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+
+    .form-section.active, .preview-section.active {
+      max-height: 5000px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sistema de Facturación - Nica Expres</h1>
+
+   <div class="logo-container">
+  <svg class="truck-logo" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fondo del logo -->
+    <rect x="10" y="30" width="280" height="50" rx="5" fill="#3498db"/>
+
+    <!-- Texto -->
+    <text x="150" y="55" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">Nica Expres</text>
+    <text x="150" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">moving and transportation</text>
+  </svg>
+</div>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-form">Crear Factura</div>
+      <div class="tab" id="tab-preview">Vista Previa</div>
+    </div>
+
+    <div class="form-section active" id="form-section">
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="empresa">Nombre de la Empresa:</label>
+            <input type="text" id="empresa" value="Nica Expres S.L.">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="cif">NIF/CIF:</label>
+            <input type="text" id="cif" value="B12345678">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="direccion">Dirección de la Empresa:</label>
+            <input type="text" id="direccion" value="Calle Principal 123, 28001 Madrid">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="telefono">Teléfono:</label>
+            <input type="text" id="telefono" value="+34 91 234 56 78">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" value="info@nicaexpres.es">
+      </div>
+
+      <div class="form-group">
+        <label for="factura-num">Número de Factura:</label>
+        <input type="text" id="factura-num" value="2025/001">
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="fecha">Fecha de Emisión:</label>
+            <input type="date" id="fecha" value="2025-03-21">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="fecha-servicio">Fecha del Servicio:</label>
+            <input type="date" id="fecha-servicio" value="2025-03-21">
+          </div>
+        </div>
+      </div>
+
+      <h3>Datos del Cliente</h3>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="cliente-nombre">Nombre del Cliente:</label>
+            <input type="text" id="cliente-nombre">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="cliente-nif">NIF/CIF:</label>
+            <input type="text" id="cliente-nif">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="cliente-direccion">Dirección del Cliente:</label>
+        <input type="text" id="cliente-direccion">
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="cliente-email">Email del Cliente:</label>
+            <input type="email" id="cliente-email">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="cliente-telefono">Teléfono del Cliente:</label>
+            <input type="text" id="cliente-telefono">
+          </div>
+        </div>
+      </div>
+
+      <h3>Detalles de la Mudanza</h3>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="origen">Dirección de Origen:</label>
+            <input type="text" id="origen">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="destino">Dirección de Destino:</label>
+            <input type="text" id="destino">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo-mudanza">Tipo de Mudanza:</label>
+        <select id="tipo-mudanza">
+          <option value="Local">Local (Misma ciudad)</option>
+          <option value="Provincial">Provincial</option>
+          <option value="Nacional">Nacional</option>
+          <option value="Internacional">Internacional</option>
+        </select>
+      </div>
+
+      <h3>Servicios y Precios</h3>
+
+      <div class="services-container" id="services-container">
+        <!-- Servicios se agregarán aquí mediante JavaScript -->
+      </div>
+
+      <button type="button" id="add-service">Agregar Servicio</button>
+
+      <h3>Pago a Trabajadores por Hora</h3>
+
+      <div class="workers-container" id="workers-container">
+        <!-- Trabajadores se agregarán aquí mediante JavaScript -->
+      </div>
+
+      <button type="button" id="add-worker">Agregar Trabajador</button>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="iva-porcentaje">Porcentaje de IVA (%):</label>
+            <input type="number" id="iva-porcentaje" value="21" min="0" max="100">
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="forma-pago">Forma de Pago:</label>
+            <select id="forma-pago">
+              <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+              <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+              <option value="Efectivo">Efectivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notas">Notas Adicionales:</label>
+        <textarea id="notas" rows="3"></textarea>
+      </div>
+
+      <button type="button" id="generate-btn">Generar Factura</button>
+    </div>
+
+    <div class="preview-section" id="preview-section">
+      <div class="factura" id="factura-preview">
+        <!-- La factura se generará aquí con JavaScript -->
+      </div>
+
+      <button type="button" id="print-btn" class="print-btn">Imprimir Factura</button>
+      <button type="button" id="back-btn">Volver al Formulario</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementos DOM principales
+      const tabForm = document.getElementById('tab-form');
+      const tabPreview = document.getElementById('tab-preview');
+      const formSection = document.getElementById('form-section');
+      const previewSection = document.getElementById('preview-section');
+      const generateBtn = document.getElementById('generate-btn');
+      const printBtn = document.getElementById('print-btn');
+      const backBtn = document.getElementById('back-btn');
+      const addServiceBtn = document.getElementById('add-service');
+      const addWorkerBtn = document.getElementById('add-worker');
+      const servicesContainer = document.getElementById('services-container');
+      const workersContainer = document.getElementById('workers-container');
+
+      // Funciones de ayuda
+      function sanitizeHTML(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+      }
+
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('es-ES', {
+          style: 'currency',
+          currency: 'EUR',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(parseFloat(amount) || 0);
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        } catch (e) {
+          console.error('Error formateando fecha:', e);
+          return '';
+        }
+      }
+
+      // Gestión de pestañas
+      tabForm.addEventListener('click', function() {
+        tabForm.classList.add('active');
+        tabPreview.classList.remove('active');
+        formSection.classList.add('active');
+        previewSection.classList.remove('active');
+      });
+
+      tabPreview.addEventListener('click', function() {
+        try {
+          generateFactura();
+          tabForm.classList.remove('active');
+          tabPreview.classList.add('active');
+          formSection.classList.remove('active');
+          previewSection.classList.add('active');
+        } catch (error) {
+          console.error('Error al generar vista previa:', error);
+          alert('Ocurrió un error al generar la factura. Por favor, revise los datos ingresados.');
+        }
+      });
+
+      // Botones de acción
+      generateBtn.addEventListener('click', function() {
+        try {
+          generateFactura();
+          tabForm.classList.remove('active');
+          tabPreview.classList.add('active');
+          formSection.classList.remove('active');
+          previewSection.classList.add('active');
+        } catch (error) {
+          console.error('Error al generar factura:', error);
+          alert('Ocurrió un error al generar la factura. Por favor, revise los datos ingresados.');
+        }
+      });
+
+      backBtn.addEventListener('click', function() {
+        tabForm.classList.add('active');
+        tabPreview.classList.remove('active');
+        formSection.classList.add('active');
+        previewSection.classList.remove('active');
+      });
+
+      printBtn.addEventListener('click', function() {
+        window.print();
+      });
+
+      // Funciones para agregar servicios y trabajadores
+      function addServiceRow() {
+        const serviceItem = document.createElement('div');
+        serviceItem.className = 'service-item';
+
+        serviceItem.innerHTML = `
+          <input type="text" class="service-description" placeholder="Descripción del servicio">
+          <input type="number" class="service-quantity" placeholder="Cantidad" value="1" min="1">
+          <input type="number" class="service-price" placeholder="Precio unitario" value="0" min="0" step="0.01">
+          <button type="button" class="delete-btn">X</button>
+        `;
+
+        const deleteBtn = serviceItem.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', function() {
+          serviceItem.remove();
+        });
+
+        servicesContainer.appendChild(serviceItem);
+        return serviceItem;
+      }
+
+      function addWorkerRow() {
+        const workerItem = document.createElement('div');
+        workerItem.className = 'worker-item';
+
+        workerItem.innerHTML = `
+          <input type="text" class="worker-name" placeholder="Nombre del trabajador">
+          <input type="number" class="worker-hours" placeholder="Horas trabajadas" value="0" min="0" step="0.5">
+          <input type="number" class="worker-rate" placeholder="Tarifa por hora" value="0" min="0" step="0.01">
+          <button type="button" class="delete-btn">X</button>
+        `;
+
+        const deleteBtn = workerItem.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', function() {
+          workerItem.remove();
+        });
+
+        workersContainer.appendChild(workerItem);
+        return workerItem;
+      }
+
+      // Eventos para agregar servicios y trabajadores
+      addServiceBtn.addEventListener('click', addServiceRow);
+      addWorkerBtn.addEventListener('click', addWorkerRow);
+
+      // Inicializar con una fila de servicio y trabajador
+      addServiceRow();
+      addWorkerRow();
+
+      // Función principal para generar la factura
+      function generateFactura() {
+        // Obtener y validar datos de la empresa
+        const empresa = sanitizeHTML(document.getElementById('empresa').value.trim()) || 'Nica Expres S.L.';
+        const cif = sanitizeHTML(document.getElementById('cif').value.trim()) || 'B12345678';
+        const direccion = sanitizeHTML(document.getElementById('direccion').value.trim()) || 'Dirección no especificada';
+        const telefono = sanitizeHTML(document.getElementById('telefono').value.trim()) || 'Teléfono no especificado';
+        const email = sanitizeHTML(document.getElementById('email').value.trim()) || 'Email no especificado';
+
+        // Obtener y validar datos de la factura
+        const facturaNum = sanitizeHTML(document.getElementById('factura-num').value.trim()) || 'Sin número';
+        const fecha = document.getElementById('fecha').value;
+        const fechaFormateada = formatDate(fecha) || 'Fecha no especificada';
+        const fechaServicio = document.getElementById('fecha-servicio').value;
+        const fechaServicioFormateada = formatDate(fechaServicio) || 'Fecha no especificada';
+
+        // Obtener datos del cliente
+        const clienteNombre = sanitizeHTML(document.getElementById('cliente-nombre').value.trim()) || 'Cliente no especificado';
+        const clienteNif = sanitizeHTML(document.getElementById('cliente-nif').value.trim()) || 'NIF no especificado';
+        const clienteDireccion = sanitizeHTML(document.getElementById('cliente-direccion').value.trim()) || 'Dirección no especificada';
+        const clienteEmail = sanitizeHTML(document.getElementById('cliente-email').value.trim()) || 'Email no especificado';
+        const clienteTelefono = sanitizeHTML(document.getElementById('cliente-telefono').value.trim()) || 'Teléfono no especificado';
+
+        // Obtener datos de la mudanza
+        const origen = sanitizeHTML(document.getElementById('origen').value.trim()) || 'Origen no especificado';
+        const destino = sanitizeHTML(document.getElementById('destino').value.trim()) || 'Destino no especificado';
+        const tipoMudanza = sanitizeHTML(document.getElementById('tipo-mudanza').value) || 'Local';
+
+        // Obtener datos de pago
+        const ivaPorcentajeEl = document.getElementById('iva-porcentaje');
+        const ivaPorcentaje = parseFloat(ivaPorcentajeEl.value) || 21;
+        ivaPorcentajeEl.value = ivaPorcentaje; // Normalizar valor en caso de error
+
+        const formaPago = sanitizeHTML(document.getElementById('forma-pago').value) || 'Transferencia Bancaria';
+        const notas = sanitizeHTML(document.getElementById('notas').value.trim()) || '';
+
+        // Procesar servicios
+        let subtotalServicios = 0;
+        const servicios = [];
+
+        document.querySelectorAll('.service-item').forEach(item => {
+          const descripcion = sanitizeHTML(item.querySelector('.service-description').value.trim()) || 'Servicio de mudanza';
+
+          const cantidadEl = item.querySelector('.service-quantity');
+          const cantidad = parseInt(cantidadEl.value) || 1;
+          cantidadEl.value = cantidad; // Normalizar valor
+
+          const precioUnitarioEl = item.querySelector('.service-price');
+          const precioUnitario = parseFloat(precioUnitarioEl.value) || 0;
+          precioUnitarioEl.value = precioUnitario.toFixed(2); // Normalizar valor
+
+          const total = cantidad * precioUnitario;
+          subtotalServicios += total;
+
+          servicios.push({
+            descripcion,
+            cantidad,
+            precioUnitario,
+            total
+          });
+        });
+
+        // Procesar trabajadores
+        let subtotalTrabajadores = 0;
+        const trabajadores = [];
+
+        document.querySelectorAll('.worker-item').forEach(item => {
+          const nombre = sanitizeHTML(item.querySelector('.worker-name').value.trim()) || 'Trabajador';
+
+          const horasEl = item.querySelector('.worker-hours');
+          const horas = parseFloat(horasEl.value) || 0;
+          horasEl.value = horas; // Normalizar valor
+
+          const tarifaEl = item.querySelector('.worker-rate');
+          const tarifa = parseFloat(tarifaEl.value) || 0;
+          tarifaEl.value = tarifa.toFixed(2); // Normalizar valor
+
+          const total = horas * tarifa;
+          subtotalTrabajadores += total;
+
+          trabajadores.push({
+            nombre,
+            horas,
+            tarifa,
+            total
+          });
+        });
+
+        // Calcular totales
+        const subtotal = subtotalServicios + subtotalTrabajadores;
+        const iva = subtotal * (ivaPorcentaje / 100);
+        const total = subtotal + iva;
+
+        // Crear SVG del logo
+        // Esta es la parte donde se define el logoSVG en la función generateFactura()
+const logoSVG = `
+  <svg class="truck-logo" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg" width="200">
+    <!-- Fondo del logo -->
+    <rect x="10" y="30" width="280" height="50" rx="5" fill="#3498db"/>
+
+    <!-- Texto -->
+    <text x="150" y="55" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#fff" text-anchor="middle">Nica Expres</text>
+    <text x="150" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">moving and transportation</text>
+  </svg>
+`;NicaExpress3.0.html
+
+        // Generar HTML de la factura
+        const facturaHTML = `
+          <h2>FACTURA</h2>
+          <div class="factura-header">
+            <div class="factura-logo">
+              ${logoSVG}
+              <p>${empresa}</p>
+              <p>NIF/CIF: ${cif}</p>
+            </div>
+            <div class="factura-info">
+              <h3>Factura Nº: ${facturaNum}</h3>
+              <p>Fecha de emisión: ${fechaFormateada}</p>
+              <p>Fecha del servicio: ${fechaServicioFormateada}</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <div class="factura-details">
+                <h3>Datos de la Empresa</h3>
+                <p>${empresa}</p>
+                <p>${direccion}</p>
+                <p>NIF/CIF: ${cif}</p>
+                <p>Teléfono: ${telefono}</p>
+                <p>Email: ${email}</p>
+              </div>
+            </div>
+            <div class="col">
+              <div class="factura-details">
+                <h3>Cliente</h3>
+                <p>${clienteNombre}</p>
+                <p>${clienteDireccion}</p>
+                <p>NIF/CIF: ${clienteNif}</p>
+                <p>Teléfono: ${clienteTelefono}</p>
+                <p>Email: ${clienteEmail}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="factura-details">
+            <h3>Detalles de la Mudanza</h3>
+            <p><strong>Tipo de Mudanza:</strong> ${tipoMudanza}</p>
+            <p><strong>Dirección de Origen:</strong> ${origen}</p>
+            <p><strong>Dirección de Destino:</strong> ${destino}</p>
+          </div>
+
+          <h3>Servicios</h3>
+          <table class="factura-table">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${servicios.map(servicio => `
+                <tr>
+                  <td>${servicio.descripcion}</td>
+                  <td>${servicio.cantidad}</td>
+                  <td>${formatCurrency(servicio.precioUnitario)}</td>
+                  <td>${formatCurrency(servicio.total)}</td>
+                </tr>
+              `).join('')}
+              <tr>
+                <td colspan="3" style="text-align: right;"><strong>Subtotal Servicios:</strong></td>
+                <td>${formatCurrency(subtotalServicios)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Pago a Trabajadores</h3>
+          <table class="factura-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Horas</th>
+                <th>Tarifa por Hora</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trabajadores.map(trabajador => `
+  <tr>
+    <td>${trabajador.nombre}</td>
+    <td>${trabajador.horas}</td>
+    <td>${formatCurrency(trabajador.tarifa)}</td>
+    <td>${formatCurrency(trabajador.total)}</td>
+  </tr>
+`).join('')}
+<tr>
+  <td colspan="3" style="text-align: right;"><strong>Subtotal Trabajadores:</strong></td>
+  <td>${formatCurrency(subtotalTrabajadores)}</td>
+</tr>
+</tbody>
+</table>
+
+<table class="factura-table">
+<tbody>
+  <tr>
+    <td colspan="3" style="text-align: right;"><strong>Subtotal:</strong></td>
+    <td>${formatCurrency(subtotal)}</td>
+  </tr>
+  <tr>
+    <td colspan="3" style="text-align: right;"><strong>IVA (${ivaPorcentaje}%):</strong></td>
+    <td>${formatCurrency(iva)}</td>
+  </tr>
+  <tr class="total">
+    <td colspan="3" style="text-align: right;"><strong>TOTAL:</strong></td>
+    <td>${formatCurrency(total)}</td>
+  </tr>
+</tbody>
+</table>
+
+<div class="factura-details">
+  <h3>Forma de Pago</h3>
+  <p>${formaPago}</p>
+</div>
+
+${notas ? `
+<div class="factura-details">
+  <h3>Notas Adicionales</h3>
+  <p>${notas}</p>
+</div>
+` : ''}
+
+<div class="factura-footer">
+  <p>Gracias por confiar en nuestros servicios de mudanza.</p>
+  <p>Esta factura sirve como comprobante de pago.</p>
+</div>
+`;
+
+        // Insertar la factura en el contenedor de vista previa
+        document.getElementById('factura-preview').innerHTML = facturaHTML;
+      }
+    });
+  </script>
+</body>
+</html>
